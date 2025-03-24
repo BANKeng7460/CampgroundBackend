@@ -21,6 +21,10 @@ const CampgroundSchema = new mongoose.Schema({
         required: [true, 'Please add a phone number'],
         maxlength: [20, 'Phone number can not be longer than 20 characters']
     },
+    picture: {
+        type: String,
+        required: false,
+    },
     createdAt: {
         type: Date,
         default: Date.now
