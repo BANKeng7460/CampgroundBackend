@@ -1,0 +1,4 @@
+#all node_modules
+node_modules/*
+#config file
+#config/config.env

@@ -1,0 +1,23 @@
+@startuml Manage Booking (GET ALL)
+
+header Campground Booking Sequence Diagram
+footer Page %page% of %lastpage%
+title "Manage Booking (GET ALL)"
+
+participant "Client" as client
+participant "<<JavaScript>>\n:server" as server
+participant "<<Router>>\n:bookings" as routerBookings
+participant "<<Controller>>\n:bookings" as controllersBookings
+participant "<<Model>>\n:Booking" as modelBooking
+database "<<MongoDB>>\n:bookings" as BookingsDatabase
+
+client->server ++: req.get('api/v1/bookings')
+server->routerBookings ++: app.use('/api/v1/bookings', bookings);
+routerBookings -> controllersBookings ++: getBookings
+controllersBookings -> modelBooking ++: find({user.req.user.id})
+modelBooking -> BookingsDatabase ++: BookingSchema
+BookingsDatabase --> modelBooking --: booking
+modelBooking --> controllersBookings --: booking
+controllersBookings -> client --: response
+
+@enduml

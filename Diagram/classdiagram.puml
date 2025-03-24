@@ -1,0 +1,64 @@
+@startuml Project1
+
+class User {
+    +_id: ObjectId
+    +name: String
+    +tel: String
+    +email: String
+    +password: String
+    +role: String
+    +createdAt: Date
+}
+
+class Dentist {
+    +_id: ObjectId
+    +name: String
+    +yearsofexperience: Integer
+    +areaofexpertise: String
+}
+
+class Appointment {
+    +_id: ObjectId
+    +apptDate: Date
+    +user: ObjectId
+    +dentist: ObjectId
+    +createdAt: Date
+}
+
+class AuthController {
+    +register()
+    +login()
+    +getMe()
+    +logout()
+}
+
+class DentistController {
+    +getDentists()
+    +getDentis()
+    +createDentist()
+    +updateDentist()
+    +deleteDentist()
+}
+
+class AppointmentController {
+    +getAppointment()
+    +getAppointments()
+    +addAppointment()
+    +updateAppointment()
+    +deleteAppointment()
+}
+
+class Database {
+    +connectDB()
+}
+
+User --> Appointment : book
+Dentist --> Appointment : assigned to
+AuthController --> User : controls
+DentistController --> Dentist : controls
+AppointmentController --> Appointment : controls
+Database <-- User : stores
+Database <-- Dentist : stores
+Database <-- Appointment : stores
+
+@enduml
