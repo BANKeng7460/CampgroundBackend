@@ -28,7 +28,12 @@ app.use('/api/v1/campgrounds', campgrounds);
 app.use('/api/v1/bookings', bookings);
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/blacklists',blacklists);
-app.use(cors());
+
+var corsOptions = {
+    origin: "http://localhost:3001"
+  };
+  
+  app.use(cors(corsOptions));
 
 const PORT = process.env.PORT || 5000;
 
