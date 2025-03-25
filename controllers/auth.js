@@ -91,23 +91,72 @@ exports.getMe=async(req,res,next)=>{
     });
 };
 
-//@desc     Get all users with blacklist status
+//@desc     Get all users with blacklist status, pagination, search, sort, filter by role and ban
 //@route    GET /api/v1/auth/users
-//@access   Private (Admin or similar)
+//@access   Private (Admin)
 exports.getAllUsers = async (req, res, next) => {
     try {
-        const users = await User.find().select('-password').lean(); // Use .lean() for faster + modifiable plain objects
+        const {
+            page = 1,
+            limit = 10,
+            search = '',
+            sort = 'asc',
+            role,
+            isBanned
+        } = req.query;
 
-        const bannedIds = await Blacklist.find().distinct('bannedId'); // Get all banned user IDs
+        const query = {};
 
-        const usersWithStatus = users.map(user => {
-            return {
-                ...user,
-                isBanned: bannedIds.includes(user._id.toString())
-            };
+        // 🔍 Search by name or ID
+        if (search) {
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(search);
+            if (isObjectId) {
+                query._id = search;
+            } else {
+                query.name = { $regex: search, $options: 'i' };
+            }
+        }
+
+        // 🔎 Filter by role
+        if (role) {
+            query.role = role;
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const sortOrder = sort === 'desc' ? -1 : 1;
+
+        const users = await User.find(query)
+            .select('-password')
+            .sort({ name: sortOrder })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .lean();
+
+        const total = await User.countDocuments(query);
+
+        // 🔍 Check ban status from blacklist
+        const bannedIds = await Blacklist.find().distinct('bannedId');
+
+        let usersWithStatus = users.map(user => ({
+            ...user,
+            isBanned: bannedIds.includes(user._id.toString())
+        }));
+
+        // 🧊 Filter by isBanned=true/false (after mapping)
+        if (isBanned === 'true') {
+            usersWithStatus = usersWithStatus.filter(u => u.isBanned === true);
+        } else if (isBanned === 'false') {
+            usersWithStatus = usersWithStatus.filter(u => u.isBanned === false);
+        }
+
+        res.status(200).json({
+            success: true,
+            count: usersWithStatus.length,
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / limit),
+            data: usersWithStatus
         });
-
-        res.status(200).json({ success: true, count: usersWithStatus.length, data: usersWithStatus });
 
     } catch (err) {
         console.error(err);
