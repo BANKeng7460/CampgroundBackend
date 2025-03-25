@@ -12,7 +12,7 @@ const CampgroundSchema = new mongoose.Schema({
         required: [true, 'Please add a description'],
         maxlength: [500, 'Address can not be more than 500 characters']
     },
-    Region: {
+    region: {
         type: String,
         maxlength: [50, 'Region can not be more than 50 characters']
     },
