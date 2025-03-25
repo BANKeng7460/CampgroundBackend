@@ -1,27 +1,19 @@
 const Blacklist = require('../models/Blacklist');
 const User = require('../models/User');
 
-const sendTokenResponse = (user, statusCode, res) => {
-    const token = user.getSignedJwtToken();
-    const options = {
-      expires: new Date(
-        Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
+const sendTokenResponse=(user,statusCode,res)=>{
+    const token=user.getSignedJwtToken();
+
+    const options={
+        expires:new Date(Date.now()+process.env.JWT_COOKIE_EXPIRE*24*60*60*1000),
+        httpOnly: true
     };
-    if (process.env.NODE_ENV === "production") {
-      options.secure = true;
+
+    if (process.env.NODE_ENV==='production'){
+        options.secure = true;
     }
-    res.status(statusCode).cookie("token", token, options).json({
-      success: true,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      picture: user.picture,
-      token,
-    });
-  };
+    res.status(statusCode).cookie('token',token,options).json({success:true,token});
+}
 
 exports.register=async(req,res,next)=>{
     try{
@@ -71,8 +63,6 @@ exports.login=async(req,res,next)=>{
     //const token=user.getSignedJwtToken();
     //res.status(200).json({success:true,token});
     sendTokenResponse(user,200,res);
-
-    
 }
 
 //@desc Get current Logged in user
@@ -97,25 +87,26 @@ exports.getMe=async(req,res,next)=>{
     });
 };
 
-exports.updateProfilePicture = async (req, res, next) => {
+//@desc     Get all users with blacklist status
+//@route    GET /api/v1/auth/users
+//@access   Private (Admin or similar)
+exports.getAllUsers = async (req, res, next) => {
     try {
-        const { picture } = req.body;
+        const users = await User.find().select('-password').lean(); // Use .lean() for faster + modifiable plain objects
 
-        if (!req.user) {
-            return res.status(401).json({ success: false, message: "Unauthorized" });
-        }
+        const bannedIds = await Blacklist.find().distinct('bannedId'); // Get all banned user IDs
 
-        const userId = req.user.id;
+        const usersWithStatus = users.map(user => {
+            return {
+                ...user,
+                isBanned: bannedIds.includes(user._id.toString())
+            };
+        });
 
-        const user = await User.findByIdAndUpdate(userId, { picture }, { new: true });
+        res.status(200).json({ success: true, count: usersWithStatus.length, data: usersWithStatus });
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
-
-        res.status(200).json({ success: true, message: "Profile picture updated successfully", user });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Internal server error" });
+        res.status(500).json({ success: false, message: 'Cannot fetch users' });
     }
 };
