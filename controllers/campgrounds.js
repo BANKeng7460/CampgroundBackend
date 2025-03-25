@@ -1,17 +1,63 @@
 const Campground = require('../models/Campground');
 const Booking = require('../models/Booking');
-//@desc get all campgrounds
+//@desc get all campgrounds (with search, filters, sorting, and pagination)
 //@route GET /api/v1/campgrounds
 //@access Public
 exports.getCampgrounds = async (req, res, next) => {
-    try{
-        const campgrounds = await Campground.find();
-        res.status(200).json({ success: true, count:campgrounds.length, data: campgrounds });
-    } catch (err){
-        res.status(400).json({ success: false, msg: err.message });
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = 9;
+      const skip = (page - 1) * limit;
+  
+      const query = {};
+  
+      // 🔍 Filter: Campground ID (exact match)
+      if (req.query.id) {
+        query._id = req.query.id;
+      }
+  
+      // 🔍 Search: name (partial match, case-insensitive)
+      if (req.query.search) {
+        query.name = { $regex: req.query.search, $options: 'i' };
+      }
+  
+      // 🌍 Filter: region (exact match)
+      if (req.query.region) {
+        query.region = req.query.region;
+      }
+  
+      // ⭐ Filter: minimum average rating
+      if (req.query.minRating) {
+        query.avgRating = { $gte: parseFloat(req.query.minRating) };
+      }
+  
+      // 🔃 Sort: based on query param
+      let sort = { createdAt: -1 }; // default: newest
+      if (req.query.sort === 'rating') sort = { avgRating: -1 };
+      else if (req.query.sort === 'oldest') sort = { createdAt: 1 };
+  
+      // 📦 Fetch paginated and filtered results
+      const campgrounds = await Campground.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort(sort);
+  
+      const total = await Campground.countDocuments(query);
+      const totalPages = Math.ceil(total / limit);
+  
+      res.status(200).json({
+        success: true,
+        count: campgrounds.length,
+        total,
+        totalPages,
+        currentPage: page,
+        data: campgrounds,
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, msg: err.message });
     }
-};
-
+  };
+  
 //@desc get single campground
 //@route GET /api/v1/campgrounds/:id
 //@access Public
