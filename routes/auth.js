@@ -10,7 +10,6 @@ router.post('/register',register);
 router.post('/login',login);
 router.get('/me',protect,getMe);
 router.get('/logout',logout);
-router.put('/updateinfo', protect, authorize('user', 'admin'), updateProfilePicture);
-
+router.put('/updateinfo',updateProfilePicture);
 
 module.exports=router;
