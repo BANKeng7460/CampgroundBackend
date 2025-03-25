@@ -10,6 +10,6 @@ router.post('/register',register);
 router.post('/login',login);
 router.get('/me',protect,getMe);
 router.get('/logout',logout);
-router.put('updateinfo',updateProfilePicture)
+router.put('/updateinfo',updateProfilePicture)
 
 module.exports=router;
