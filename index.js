@@ -20,7 +20,7 @@ const blacklists = require('./routes/blacklists');
 const app = express();
 //body parser
 app.use(express.json());
-
+app.use(cors());
 //mount routers
 app.use('/api/v1/campgrounds', campgrounds);
 // app.use('/api/v1/reviews', reviews);
@@ -30,7 +30,7 @@ app.use('/api/v1/auth', auth);
 app.use('/api/v1/blacklists',blacklists);
 
 
-app.use(cors());
+
 
 const PORT = process.env.PORT || 5000;
 
